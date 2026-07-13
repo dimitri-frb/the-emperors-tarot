@@ -168,6 +168,62 @@ function layoutImgSources(meSlug, oppSlug, i) {
   };
 }
 
+/* ---------- notes sync link (device -> device, no server) ---------- */
+
+function b64urlEncode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function b64urlDecode(s) {
+  const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/"));
+  return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+}
+
+async function copySyncLink() {
+  const count = Object.keys(notes).length;
+  if (!count) {
+    alert("No notes to sync yet — write some first.");
+    return;
+  }
+  const url = location.origin + location.pathname + "#import=" + b64urlEncode(JSON.stringify(notes));
+  const msg = `Sync link copied (notes for ${count} opponent${count > 1 ? "s" : ""}).\n\nSend it to your other device (WhatsApp, email, AirDrop…) and open it there.`;
+  try {
+    await navigator.clipboard.writeText(url);
+    alert(msg);
+  } catch (e) {
+    prompt("Copy this link and open it on your other device:", url);
+  }
+}
+
+function handleImportHash() {
+  if (!location.hash.startsWith("#import=")) return;
+  let ok = false;
+  try {
+    const incoming = JSON.parse(b64urlDecode(location.hash.slice(8)));
+    const entries = Object.entries(incoming).filter(([id]) => PLAYERS.some((p) => p.id === id));
+    if (!entries.length) throw new Error("no valid entries");
+    if (confirm(`Import notes for ${entries.length} opponent${entries.length > 1 ? "s" : ""} from this link?\n\nYour notes for those opponents will be replaced.`)) {
+      for (const [id, n] of entries) {
+        notes[id] = typeof n === "string" ? { macro: n, units: "" } : { macro: n.macro || "", units: n.units || "" };
+      }
+      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+      ok = true;
+    }
+  } catch (e) {
+    alert("Couldn't read this sync link — ask for a fresh one.");
+  }
+  history.replaceState(null, "", location.pathname + location.search);
+  if (ok) alert("Notes imported ✓");
+  return ok;
+}
+
+window.addEventListener("hashchange", () => {
+  if (handleImportHash()) render();
+});
+
 /* ---------- notes PDF export ---------- */
 
 async function exportNotesPDF() {
@@ -375,7 +431,8 @@ function rosterHTML() {
     </div>
     <div class="card player-list" id="player-list">
       ${filteredRoster().map(playerRowHTML).join("")}
-    </div>`;
+    </div>
+    <div class="credit">Notes stay on this device — <button class="link-btn" data-action="copy-sync">copy a sync link</button> to open them on your phone.</div>`;
 }
 
 function matchupHTML() {
@@ -562,6 +619,9 @@ app.addEventListener("click", (e) => {
     case "export-notes":
       exportNotesPDF();
       break;
+    case "copy-sync":
+      copySyncLink();
+      break;
     case "cancel-pick-self":
       state.pickingSelf = false;
       state.search = "";
@@ -588,4 +648,5 @@ app.addEventListener("click", (e) => {
   }
 });
 
+handleImportHash();
 render();
