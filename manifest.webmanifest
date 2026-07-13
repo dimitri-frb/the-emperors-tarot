@@ -1,0 +1,13 @@
+{
+  "name": "The Emperor's Tarot",
+  "short_name": "Emperor's Tarot",
+  "description": "Warhammer 40k tournament matchup companion — Málaga Open",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
+  "icons": [
+    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

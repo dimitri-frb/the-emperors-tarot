@@ -1,0 +1,374 @@
+/* The Emperor's Tarot — Málaga Open matchups. Design tokens from handoff (Apple/iOS-like). */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #F2F2F7;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: #1C1C1E;
+}
+
+a { color: #0A84FF; text-decoration: none; }
+a:hover { color: #0064D2; }
+
+input::placeholder { color: #AEAEB2; }
+
+.page {
+  min-height: 100vh;
+  background: #F2F2F7;
+  color: #1C1C1E;
+}
+
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 16px 16px 48px 16px;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.section-header {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8E8E93;
+  padding: 8px 4px;
+}
+
+.avatar {
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dispo-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Roster ---- */
+
+.header { padding: 24px 4px 12px 4px; }
+
+.header .eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.header h1 {
+  margin: 4px 0 2px 0;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.header .subtitle { font-size: 15px; color: #8E8E93; }
+
+.you-card {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.you-card .label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8E8E93;
+}
+
+.you-card .name { font-size: 17px; font-weight: 650; }
+.you-card .meta { font-size: 13px; color: #8E8E93; }
+
+.pill-btn {
+  border: none;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.pill-btn:hover { filter: brightness(0.95); }
+
+.roster-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4px 8px 4px;
+}
+
+.roster-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+
+.text-btn {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #E4E4E9;
+  border-radius: 12px;
+  padding: 9px 12px;
+  margin-bottom: 12px;
+}
+
+.search-box svg { flex-shrink: 0; }
+
+.search-box input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 16px;
+  flex: 1;
+  font-family: inherit;
+  color: #1C1C1E;
+  min-width: 0;
+}
+
+.player-list { overflow: hidden; }
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #F0F0F3;
+}
+.player-row:hover { background: #F7F7FA; }
+.player-row:active { background: #EFEFF3; }
+
+.player-row .avatar { width: 40px; height: 40px; font-size: 14px; }
+.player-row .name { font-size: 16px; font-weight: 600; }
+.player-row .sub { font-size: 13px; color: #8E8E93; }
+.player-row .dispo-pill { font-size: 12px; padding: 4px 10px; }
+.player-row .right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- Matchup ---- */
+
+.back-row { padding: 16px 0 12px 0; }
+
+.back-btn {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.vs-card { padding: 20px 16px; margin-bottom: 16px; }
+
+.vs-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.vs-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.vs-side .avatar { width: 56px; height: 56px; font-size: 20px; }
+.vs-side .name { font-size: 14px; font-weight: 650; max-width: 140px; }
+.vs-side .faction { font-size: 12px; color: #8E8E93; }
+
+.vs-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #C7C7CC;
+  letter-spacing: 0.08em;
+}
+
+.army-card { overflow: hidden; margin-bottom: 24px; }
+
+.army-head {
+  padding: 16px 16px 12px 16px;
+  border-bottom: 1px solid #F0F0F3;
+}
+
+.army-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.army-head .faction { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.army-head .detachment { font-size: 14px; color: #8E8E93; margin-top: 2px; }
+.army-head .dispo-pill { font-size: 13px; padding: 6px 12px; flex-shrink: 0; }
+
+.list-toggle {
+  width: 100%;
+  border: none;
+  background: #fff;
+  border-top: 1px solid #F0F0F3;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-family: inherit;
+}
+.list-toggle:hover { background: #F7F7FA; }
+.list-toggle span { font-size: 16px; font-weight: 600; color: var(--accent); }
+
+.chevron { transition: transform 0.2s; flex-shrink: 0; }
+.chevron.open { transform: rotate(180deg); }
+
+.army-list { border-top: 1px solid #F0F0F3; }
+
+.unit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #F7F7FA;
+}
+
+.unit-row .qty {
+  font-size: 13px;
+  font-weight: 700;
+  color: #8E8E93;
+  min-width: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
+.unit-row .name { font-size: 15px; font-weight: 600; }
+.unit-row .gear { font-size: 13px; color: #8E8E93; line-height: 1.4; }
+
+.unit-row .pts {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3A3A3C;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.missions-card { overflow: hidden; margin-bottom: 24px; }
+
+.mission-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+.mission-row:hover { background: #F7F7FA; }
+.mission-row.divided { border-bottom: 1px solid #F0F0F3; }
+
+.mission-row .icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mission-row .mission-name { font-size: 16px; font-weight: 650; }
+.mission-row .dispo-name { font-size: 13px; font-weight: 600; }
+.mission-row .who { font-size: 13px; color: #8E8E93; }
+
+.mission-img {
+  padding: 12px 16px;
+  background: #FAFAFC;
+}
+.mission-img.divided { border-bottom: 1px solid #F0F0F3; }
+
+.mission-img img {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+}
+
+.maps-grid { display: grid; gap: 12px; }
+
+.map-card { overflow: hidden; }
+
+.map-img { background: #EDEDF0; overflow: hidden; }
+.map-img img { width: 100%; display: block; }
+
+.map-meta {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.map-meta .layout { font-size: 16px; font-weight: 650; }
+.map-meta .sub { font-size: 13px; color: #8E8E93; }
+
+.map-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8E8E93;
+  background: #F2F2F7;
+  padding: 4px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.credit {
+  font-size: 12px;
+  color: #AEAEB2;
+  text-align: center;
+  padding: 16px 24px 0 24px;
+  line-height: 1.5;
+}
+
+.flex1 { flex: 1; min-width: 0; }
