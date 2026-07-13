@@ -159,6 +159,83 @@ function layoutImgSources(meSlug, oppSlug, i) {
   };
 }
 
+/* ---------- notes PDF export ---------- */
+
+async function exportNotesPDF() {
+  const noted = PLAYERS.filter((p) => (notes[p.id] || "").trim() && p.id !== state.meId);
+  if (!noted.length) {
+    alert("No notes yet — open a matchup and write some first.");
+    return;
+  }
+  if (!window.jspdf) {
+    alert("PDF engine not loaded yet — try again in a second.");
+    return;
+  }
+
+  const me = PLAYERS.find((p) => p.id === state.meId) || PLAYERS[0];
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 48;
+  const CW = W - M * 2;
+  let y = M;
+
+  // Header (first page only)
+  doc.setFont("helvetica", "bold").setFontSize(16).setTextColor(28, 28, 30);
+  doc.text("The Emperor's Tarot — Notes", M, y + 4);
+  doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(142, 142, 147);
+  doc.text(`Málaga Open · playing as ${me.name} (${me.faction} · ${me.dispo})`, M, y + 20);
+  y += 40;
+
+  // jsPDF's WinAnsi fonts drop combining accents (BCP names arrive NFD) — compose first.
+  const nfc = (s) => s.normalize("NFC");
+
+  for (const p of noted) {
+    const myMission = MISSION_MATRIX[me.dispo][p.dispo];
+    const theirMission = MISSION_MATRIX[p.dispo][me.dispo];
+    const infoLine = nfc(`${p.faction} · ${p.summary.detachment}`);
+    const missionLine = nfc(`You: ${myMission} (${me.dispo})  ·  Them: ${theirMission} (${p.dispo})`);
+    const noteLines = doc.setFontSize(10).splitTextToSize(nfc(notes[p.id].trim()), CW);
+    const blockH = 16 + 12 + 12 + 6 + noteLines.length * 12 + 14;
+
+    if (y + blockH > H - M) {
+      doc.addPage();
+      y = M;
+    }
+
+    doc.setDrawColor(225, 225, 230).setLineWidth(0.75);
+    doc.line(M, y, W - M, y);
+    y += 16;
+
+    doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(28, 28, 30);
+    doc.text(nfc(p.name), M, y);
+    doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(142, 142, 147);
+    y += 12;
+    doc.text(infoLine, M, y, { maxWidth: CW });
+    y += 12;
+    doc.setTextColor(90, 90, 95);
+    doc.text(missionLine, M, y, { maxWidth: CW });
+    y += 6 + 12;
+    doc.setFontSize(10).setTextColor(28, 28, 30);
+    doc.text(noteLines, M, y - 4);
+    y += (noteLines.length - 1) * 12 + 14;
+  }
+
+  const filename = "emperors-tarot-notes.pdf";
+  const blob = doc.output("blob");
+  const file = new File([blob], filename, { type: "application/pdf" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: "The Emperor's Tarot — Notes" });
+      return;
+    } catch (e) {
+      if (e.name === "AbortError") return; // user closed the share sheet
+    }
+  }
+  doc.save(filename);
+}
+
 /* ---------- rendering ---------- */
 
 const app = document.getElementById("app");
@@ -250,7 +327,7 @@ function rosterHTML() {
 
   const cancelBtn = state.pickingSelf
     ? `<button class="text-btn" data-action="cancel-pick-self">Cancel</button>`
-    : "";
+    : `<button class="text-btn" data-action="export-notes">Export notes</button>`;
 
   return `
     <div class="header">
@@ -447,6 +524,9 @@ app.addEventListener("click", (e) => {
       state.pickingSelf = true;
       state.search = "";
       render();
+      break;
+    case "export-notes":
+      exportNotesPDF();
       break;
     case "cancel-pick-self":
       state.pickingSelf = false;

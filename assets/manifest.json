@@ -3,6 +3,7 @@
   "styles.css",
   "app.js",
   "data.js",
+  "vendor/jspdf.umd.min.js",
   "assets/map-layout.png",
   "assets/missions/take-and-hold/battlefield-dominance.png",
   "assets/missions/take-and-hold/immovable-object.png",

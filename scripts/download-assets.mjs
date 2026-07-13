@@ -80,7 +80,7 @@ for (let a = 0; a < dispos.length; a++) {
 }
 
 // --- Precache manifest for the service worker
-const manifest = ["index.html", "styles.css", "app.js", "data.js", "assets/map-layout.png", ...downloaded];
+const manifest = ["index.html", "styles.css", "app.js", "data.js", "vendor/jspdf.umd.min.js", "assets/map-layout.png", ...downloaded];
 await writeFile(path.join(ROOT, "assets/manifest.json"), JSON.stringify(manifest, null, 2));
 
 console.log(`\nDone: ${downloaded.length} images downloaded, ${failed.length} failed.`);
