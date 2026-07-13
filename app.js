@@ -4,6 +4,7 @@
 import { PLAYERS, FACTION_COLORS, MISSION_MATRIX } from "./data.js";
 
 const STORAGE_KEY = "malaga-open-matchups";
+const NOTES_KEY = "malaga-open-notes";
 const GDM = "https://gdmissions.app/assets/11th";
 const ACCENT = "#0A84FF";
 const SHOW_POINTS = true;
@@ -27,6 +28,20 @@ try {
 function persist() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ meId: state.meId, oppId: state.oppId }));
+  } catch (e) {}
+}
+
+// Per-opponent notes, keyed by player id.
+let notes = {};
+try {
+  notes = JSON.parse(localStorage.getItem(NOTES_KEY) || "{}");
+} catch (e) {}
+
+function saveNote(oppId, text) {
+  if (text.trim()) notes[oppId] = text;
+  else delete notes[oppId];
+  try {
+    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
   } catch (e) {}
 }
 
@@ -319,6 +334,11 @@ function matchupHTML() {
       ${state.oppMissionOpen ? `<div class="mission-img">${imgTag(oppImg.src, oppImg.fallbacks, oppMission + " card", 12)}</div>` : ""}
     </div>
 
+    <div class="section-header">Notes · ${esc(opp.name)}</div>
+    <div class="card notes-card">
+      <textarea id="notes" placeholder="Tactics, reminders, score…" rows="3">${esc(notes[opp.id] || "")}</textarea>
+    </div>
+
     <div class="section-header">Possible maps · ${esc(opp.dispo)}</div>
     <div class="maps-grid">${maps}</div>
     <div class="credit">Official 11th-edition terrain layouts from <a href="https://gdmissions.app/11th/layouts" target="_blank" rel="noopener">gdmissions.app</a> (requires internet).</div>`;
@@ -335,6 +355,19 @@ function render() {
       state.search = e.target.value;
       const list = document.getElementById("player-list");
       if (list) list.innerHTML = filteredRoster().map(playerRowHTML).join("");
+    });
+  }
+
+  const notesEl = document.getElementById("notes");
+  if (notesEl) {
+    const autosize = () => {
+      notesEl.style.height = "auto";
+      notesEl.style.height = notesEl.scrollHeight + "px";
+    };
+    autosize();
+    notesEl.addEventListener("input", () => {
+      saveNote(state.oppId, notesEl.value);
+      autosize();
     });
   }
 }

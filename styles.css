@@ -335,6 +335,29 @@ input::placeholder { color: #AEAEB2; }
   border-radius: 12px;
 }
 
+.notes-card {
+  padding: 4px 16px;
+  margin-bottom: 24px;
+}
+
+.notes-card textarea {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.45;
+  color: #1C1C1E;
+  padding: 10px 0;
+  min-height: 66px;
+  overflow: hidden;
+}
+
+.notes-card textarea::placeholder { color: #AEAEB2; }
+
 .maps-grid { display: grid; gap: 12px; }
 
 .map-card { overflow: hidden; }
