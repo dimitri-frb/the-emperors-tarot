@@ -417,7 +417,7 @@ function rosterHTML() {
     <div class="header">
       <div class="eyebrow">Málaga Open · 40K</div>
       <h1>The Emperor's Tarot</h1>
-      <div class="subtitle">20 players · 2000 pts · Force Disposition</div>
+      <div class="subtitle">20 players · 2000 pts</div>
     </div>
     ${dispoStatsHTML()}
     ${youCard}
