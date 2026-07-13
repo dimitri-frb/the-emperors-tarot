@@ -31,14 +31,23 @@ function persist() {
   } catch (e) {}
 }
 
-// Per-opponent notes, keyed by player id.
+// Per-opponent notes, keyed by player id: { macro, units }.
+// (Older versions stored a plain string — migrated into `macro`.)
 let notes = {};
 try {
   notes = JSON.parse(localStorage.getItem(NOTES_KEY) || "{}");
+  for (const id of Object.keys(notes)) {
+    if (typeof notes[id] === "string") notes[id] = { macro: notes[id], units: "" };
+  }
 } catch (e) {}
 
-function saveNote(oppId, text) {
-  if (text.trim()) notes[oppId] = text;
+function getNote(oppId) {
+  return notes[oppId] || { macro: "", units: "" };
+}
+
+function saveNote(oppId, field, text) {
+  const n = { ...getNote(oppId), [field]: text };
+  if (n.macro.trim() || n.units.trim()) notes[oppId] = n;
   else delete notes[oppId];
   try {
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
@@ -162,7 +171,10 @@ function layoutImgSources(meSlug, oppSlug, i) {
 /* ---------- notes PDF export ---------- */
 
 async function exportNotesPDF() {
-  const noted = PLAYERS.filter((p) => (notes[p.id] || "").trim() && p.id !== state.meId);
+  const noted = PLAYERS.filter((p) => {
+    const n = getNote(p.id);
+    return (n.macro.trim() || n.units.trim()) && p.id !== state.meId;
+  });
   if (!noted.length) {
     alert("No notes yet — open a matchup and write some first.");
     return;
@@ -191,13 +203,23 @@ async function exportNotesPDF() {
   // jsPDF's WinAnsi fonts drop combining accents (BCP names arrive NFD) — compose first.
   const nfc = (s) => s.normalize("NFC");
 
+  const LABEL_W = 62; // indent so note text clears the "Macro"/"Units" label column
+
   for (const p of noted) {
+    const n = getNote(p.id);
     const myMission = MISSION_MATRIX[me.dispo][p.dispo];
     const theirMission = MISSION_MATRIX[p.dispo][me.dispo];
     const infoLine = nfc(`${p.faction} · ${p.summary.detachment}`);
     const missionLine = nfc(`You: ${myMission} (${me.dispo})  ·  Them: ${theirMission} (${p.dispo})`);
-    const noteLines = doc.setFontSize(10).splitTextToSize(nfc(notes[p.id].trim()), CW);
-    const blockH = 16 + 12 + 12 + 6 + noteLines.length * 12 + 14;
+    const fields = [
+      ["Macro", n.macro.trim()],
+      ["Units", n.units.trim()],
+    ].filter(([, text]) => text);
+
+    doc.setFontSize(10);
+    const fieldLines = fields.map(([label, text]) => [label, doc.splitTextToSize(nfc(text), CW - LABEL_W)]);
+    const fieldsH = fieldLines.reduce((h, [, lines]) => h + lines.length * 12 + 4, 0);
+    const blockH = 16 + 12 + 12 + 6 + fieldsH + 14;
 
     if (y + blockH > H - M) {
       doc.addPage();
@@ -217,9 +239,15 @@ async function exportNotesPDF() {
     doc.setTextColor(90, 90, 95);
     doc.text(missionLine, M, y, { maxWidth: CW });
     y += 6 + 12;
-    doc.setFontSize(10).setTextColor(28, 28, 30);
-    doc.text(noteLines, M, y - 4);
-    y += (noteLines.length - 1) * 12 + 14;
+
+    for (const [label, lines] of fieldLines) {
+      doc.setFont("helvetica", "bold").setFontSize(9).setTextColor(142, 142, 147);
+      doc.text(label.toUpperCase(), M, y - 4);
+      doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(28, 28, 30);
+      doc.text(lines, M + LABEL_W, y - 4);
+      y += lines.length * 12 + 4;
+    }
+    y += 10;
   }
 
   const filename = "emperors-tarot-notes.pdf";
@@ -460,7 +488,14 @@ function matchupHTML() {
 
     <div class="section-header">Notes · ${esc(opp.name)}</div>
     <div class="card notes-card">
-      <textarea id="notes" placeholder="Tactics, reminders, score…" rows="3">${esc(notes[opp.id] || "")}</textarea>
+      <div class="notes-field">
+        <div class="notes-label">Macro</div>
+        <textarea data-note-field="macro" placeholder="Game plan, tempo, scoring…" rows="2">${esc(getNote(opp.id).macro)}</textarea>
+      </div>
+      <div class="notes-field divided">
+        <div class="notes-label">Key units / strats</div>
+        <textarea data-note-field="units" placeholder="Threats, targets, stratagems to expect…" rows="2">${esc(getNote(opp.id).units)}</textarea>
+      </div>
     </div>
 
     <div class="section-header">Possible maps · ${esc(opp.dispo)}</div>
@@ -482,15 +517,14 @@ function render() {
     });
   }
 
-  const notesEl = document.getElementById("notes");
-  if (notesEl) {
+  for (const notesEl of document.querySelectorAll("[data-note-field]")) {
     const autosize = () => {
       notesEl.style.height = "auto";
       notesEl.style.height = notesEl.scrollHeight + "px";
     };
     autosize();
     notesEl.addEventListener("input", () => {
-      saveNote(state.oppId, notesEl.value);
+      saveNote(state.oppId, notesEl.dataset.noteField, notesEl.value);
       autosize();
     });
   }
