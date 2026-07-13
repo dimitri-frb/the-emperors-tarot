@@ -187,6 +187,52 @@ function playerRowHTML(p) {
     </div>`;
 }
 
+function dispoStatsHTML() {
+  const total = PLAYERS.length;
+  const counts = {};
+  for (const p of PLAYERS) counts[p.dispo] = (counts[p.dispo] || 0) + 1;
+  const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+  const R = 44;
+  const C = 2 * Math.PI * R;
+  let start = 0;
+  const arcs = rows
+    .map(([dispo, n]) => {
+      const len = (n / total) * C;
+      const [color] = dispoStyle(dispo);
+      const arc = `<circle cx="60" cy="60" r="${R}" fill="none" stroke="${color}" stroke-width="16" transform="rotate(-90 60 60)" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-start}"/>`;
+      start += len;
+      return arc;
+    })
+    .join("");
+
+  const legend = rows
+    .map(([dispo, n]) => {
+      const [color] = dispoStyle(dispo);
+      return `
+      <div class="stat-row">
+        <span class="swatch" style="background:${color}"></span>
+        <span class="stat-name">${esc(dispo)}</span>
+        <span class="stat-pct">${Math.round((n / total) * 100)}%</span>
+        <span class="stat-count">${n}/${total}</span>
+      </div>`;
+    })
+    .join("");
+
+  return `
+    <div class="card stats-card">
+      <svg class="donut" viewBox="0 0 120 120" width="110" height="110">
+        ${arcs}
+        <text x="60" y="60" text-anchor="middle" font-size="26" font-weight="800" fill="#1C1C1E">${total}</text>
+        <text x="60" y="76" text-anchor="middle" font-size="9" font-weight="600" letter-spacing="1.2" fill="#8E8E93">PLAYERS</text>
+      </svg>
+      <div class="stats-legend">
+        <div class="stats-title">Force Dispositions</div>
+        ${legend}
+      </div>
+    </div>`;
+}
+
 function rosterHTML() {
   const me = decorate(PLAYERS.find((p) => p.id === state.meId) || PLAYERS[0]);
   const youCard = state.pickingSelf
@@ -208,10 +254,11 @@ function rosterHTML() {
 
   return `
     <div class="header">
-      <div class="eyebrow">Warhammer 40k · Tournament</div>
-      <h1>Málaga Open</h1>
+      <div class="eyebrow">Málaga Open · 40K</div>
+      <h1>The Emperor's Tarot</h1>
       <div class="subtitle">20 players · 2000 pts · Force Disposition</div>
     </div>
+    ${dispoStatsHTML()}
     ${youCard}
     <div class="roster-title-row">
       <div class="roster-title">${state.pickingSelf ? "Who are you?" : "Choose your opponent"}</div>

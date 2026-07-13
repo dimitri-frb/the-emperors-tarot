@@ -92,6 +92,75 @@ input::placeholder { color: #AEAEB2; }
 
 .header .subtitle { font-size: 15px; color: #8E8E93; }
 
+.stats-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.stats-card .donut { flex-shrink: 0; }
+
+.stats-legend { flex: 1; min-width: 0; }
+
+.stats-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8E8E93;
+  padding-bottom: 8px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.stat-row .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.stat-row .stat-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-row .stat-pct {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-row .stat-count {
+  font-size: 14px;
+  color: #AEAEB2;
+  font-variant-numeric: tabular-nums;
+  min-width: 34px;
+  text-align: right;
+}
+
+@media (max-width: 480px) {
+  .stats-card { gap: 14px; padding: 14px; }
+  .stats-card .donut { width: 88px; height: 88px; }
+  .stat-row { gap: 6px; }
+  .stat-row .swatch { width: 10px; height: 10px; }
+  .stat-row .stat-name { font-size: 13px; }
+  .stat-row .stat-pct { font-size: 13px; }
+  .stat-row .stat-count { font-size: 12px; min-width: 30px; }
+}
+
 .you-card {
   padding: 14px 16px;
   display: flex;
