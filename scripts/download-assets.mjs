@@ -41,20 +41,27 @@ await rm(path.join(ROOT, "assets/missions"), { recursive: true, force: true });
 await rm(path.join(ROOT, "assets/layouts"), { recursive: true, force: true });
 
 // --- Mission cards: MISSION_MATRIX[myDispo][oppDispo] -> primary-missions/{dispoSlug}/{missionSlug}.png
+// Some missions also have a back side ("Objective Action"): {missionSlug}-back.png — optional.
 console.log("Mission cards:");
+let backs = 0;
 for (const myDispo of dispos) {
   for (const oppDispo of dispos) {
     const mission = MISSION_MATRIX[myDispo][oppDispo];
-    const rel = `assets/missions/${slug(myDispo)}/${slug(mission)}.png`;
-    const url = `${GDM}/primary-missions/${slug(myDispo)}/${slug(mission)}.png`;
-    const buf = await fetchImage(url);
-    if (buf) await save(rel, buf);
+    const base = `${slug(myDispo)}/${slug(mission)}`;
+    const buf = await fetchImage(`${GDM}/primary-missions/${base}.png`);
+    if (buf) await save(`assets/missions/${base}.png`, buf);
     else {
-      failed.push(url);
-      console.log("  ✗", url);
+      failed.push(`${GDM}/primary-missions/${base}.png`);
+      console.log("  ✗", base);
+    }
+    const back = await fetchImage(`${GDM}/primary-missions/${base}-back.png`);
+    if (back) {
+      await save(`assets/missions/${base}-back.png`, back);
+      backs++;
     }
   }
 }
+console.log(`(${backs} missions have a back side)`);
 
 // --- Terrain layouts: every unordered pairing (incl. mirror matches), 3 layouts each.
 console.log("Terrain layouts:");

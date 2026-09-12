@@ -158,10 +158,11 @@ function decorate(p) {
 
 // Image with a chain of fallback sources: tries local asset first, then remote,
 // then (for layouts) the swapped-slug remote, then the bundled placeholder.
-function imgTag(src, fallbacks, alt, radius) {
+function imgTag(src, fallbacks, alt, radius, hideOnFail) {
   const fb = esc(JSON.stringify(fallbacks || []));
   const r = radius ? `border-radius:${radius}px` : "";
-  return `<img src="${esc(src)}" alt="${esc(alt)}" data-fallbacks="${fb}" data-fb="0" style="width:100%;display:block;${r}">`;
+  const hide = hideOnFail ? ` data-hide-fail="1"` : "";
+  return `<img src="${esc(src)}" alt="${esc(alt)}" data-fallbacks="${fb}" data-fb="0"${hide} style="width:100%;display:block;${r}">`;
 }
 
 // img error events don't bubble — listen in capture phase.
@@ -175,6 +176,8 @@ document.addEventListener(
     if (i < fallbacks.length) {
       el.dataset.fb = String(i + 1);
       el.src = fallbacks[i];
+    } else if (el.dataset.hideFail) {
+      el.style.display = "none"; // optional image (e.g. mission card back) that doesn't exist
     }
   },
   true
@@ -185,6 +188,22 @@ function missionImgSources(dispoSlug, missionSlug) {
     src: `assets/missions/${dispoSlug}/${missionSlug}.png`,
     fallbacks: [`${GDM}/primary-missions/${dispoSlug}/${missionSlug}.png`],
   };
+}
+
+// Some missions have a second side (the Objective Action card) — hidden when absent.
+function missionCardHTML(dispoSlug, mission) {
+  const missionSlug = slug(mission);
+  const front = missionImgSources(dispoSlug, missionSlug);
+  return (
+    imgTag(front.src, front.fallbacks, mission + " card", 12) +
+    imgTag(
+      `assets/missions/${dispoSlug}/${missionSlug}-back.png`,
+      [`${GDM}/primary-missions/${dispoSlug}/${missionSlug}-back.png`],
+      mission + " objective action",
+      12,
+      true
+    )
+  );
 }
 
 function layoutImgSources(meSlug, oppSlug, i) {
@@ -492,8 +511,6 @@ function matchupHTML() {
   const oppSlug = slug(opp.dispo);
   const meMission = MISSION_MATRIX[me.dispo][opp.dispo];
   const oppMission = MISSION_MATRIX[opp.dispo][me.dispo];
-  const meImg = missionImgSources(meSlug, slug(meMission));
-  const oppImg = missionImgSources(oppSlug, slug(oppMission));
 
   const unitRows = opp.list
     .map(
@@ -580,7 +597,7 @@ function matchupHTML() {
         </div>
         ${chevronDown("#C7C7CC", state.meMissionOpen)}
       </div>
-      ${state.meMissionOpen ? `<div class="mission-img divided">${imgTag(meImg.src, meImg.fallbacks, meMission + " card", 12)}</div>` : ""}
+      ${state.meMissionOpen ? `<div class="mission-img divided">${missionCardHTML(meSlug, meMission)}</div>` : ""}
       <div class="mission-row" data-action="toggle-opp-mission">
         <div class="icon">${dispoIcon(opp.dispo, 34)}</div>
         <div class="flex1">
@@ -590,7 +607,7 @@ function matchupHTML() {
         </div>
         ${chevronDown("#C7C7CC", state.oppMissionOpen)}
       </div>
-      ${state.oppMissionOpen ? `<div class="mission-img">${imgTag(oppImg.src, oppImg.fallbacks, oppMission + " card", 12)}</div>` : ""}
+      ${state.oppMissionOpen ? `<div class="mission-img">${missionCardHTML(oppSlug, oppMission)}</div>` : ""}
     </div>
 
     <div class="section-header">Notes · ${esc(opp.name)}</div>

@@ -436,6 +436,8 @@ input::placeholder { color: #AEAEB2; }
   border-radius: 12px;
 }
 
+.mission-img img + img { margin-top: 12px; }
+
 .notes-card {
   padding: 0 16px;
   margin-bottom: 24px;
