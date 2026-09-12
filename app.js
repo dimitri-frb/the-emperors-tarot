@@ -469,11 +469,11 @@ function rosterHTML() {
   return `
     <div class="header">
       <div class="event-picker">
-        <span class="eyebrow">${esc(curEvent().name)} · 40K</span>
-        <svg width="10" height="6" viewBox="0 0 14 9" fill="none"><path d="M1 1L7 7.5L13 1" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <select id="event-picker" aria-label="Choose event">
           ${EVENTS.map((ev) => `<option value="${esc(ev.id)}" ${ev.id === curEvent().id ? "selected" : ""}>${esc(ev.name)}</option>`).join("")}
         </select>
+        <span class="eyebrow">· 40K</span>
+        <svg width="10" height="6" viewBox="0 0 14 9" fill="none"><path d="M1 1L7 7.5L13 1" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <h1>The Emperor's Tarot</h1>
       <div class="subtitle">${curPlayers().length} players · ${curEvent().points} pts</div>
@@ -627,6 +627,14 @@ function render() {
   const picker = document.getElementById("event-picker");
   if (picker) {
     picker.addEventListener("change", (e) => switchEvent(e.target.value));
+    // Shrink the select to the selected option's text (it defaults to the widest option).
+    const sizer = document.createElement("span");
+    sizer.style.cssText =
+      "position:absolute;visibility:hidden;white-space:nowrap;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;font-family:inherit";
+    sizer.textContent = curEvent().name;
+    document.body.appendChild(sizer);
+    picker.style.width = Math.ceil(sizer.getBoundingClientRect().width) + 8 + "px";
+    sizer.remove();
   }
 
   const search = document.getElementById("search");
