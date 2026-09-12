@@ -459,6 +459,30 @@ function dispoStatsHTML() {
     </div>`;
 }
 
+function armiesStatsHTML() {
+  const counts = {};
+  for (const p of curPlayers()) counts[p.faction] = (counts[p.faction] || 0) + 1;
+  const rows = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const max = rows.length ? rows[0][1] : 1;
+
+  const bars = rows
+    .map(
+      ([faction, n]) => `
+      <div class="army-row">
+        <span class="army-name">${esc(faction)}</span>
+        <span class="army-track"><span class="army-fill" style="width:${Math.round((n / max) * 100)}%;background:${FACTION_COLORS[faction] || "#8E8E93"}"></span></span>
+        <span class="army-count">${n}</span>
+      </div>`
+    )
+    .join("");
+
+  return `
+    <div class="card armies-card">
+      <div class="stats-title">Armies</div>
+      ${bars}
+    </div>`;
+}
+
 function rosterHTML() {
   const me = decorate(curPlayers().find((p) => p.id === state.meId) || curPlayers()[0]);
   const youCard = state.pickingSelf
@@ -489,6 +513,7 @@ function rosterHTML() {
       <div class="subtitle">${curPlayers().length} players · ${curEvent().points} pts</div>
     </div>
     ${dispoStatsHTML()}
+    ${armiesStatsHTML()}
     ${youCard}
     <div class="roster-title-row">
       <div class="roster-title">${state.pickingSelf ? "Who are you?" : "Choose your opponent"}</div>

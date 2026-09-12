@@ -183,8 +183,57 @@ input::placeholder { color: #AEAEB2; }
   text-align: right;
 }
 
+.armies-card {
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.armies-card .stats-title { padding-bottom: 10px; }
+
+.army-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 0;
+}
+
+.army-name {
+  width: 138px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.army-track {
+  flex: 1;
+  height: 12px;
+  background: #F2F2F7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.army-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  min-width: 12px;
+}
+
+.army-count {
+  min-width: 20px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #3A3A3C;
+}
+
 @media (max-width: 480px) {
   .stats-card { gap: 14px; padding: 14px; }
+  .army-name { width: 118px; font-size: 12px; }
   .stats-card .donut { width: 88px; height: 88px; }
   .stat-row { gap: 6px; }
   .stat-row .swatch { width: 10px; height: 10px; }
