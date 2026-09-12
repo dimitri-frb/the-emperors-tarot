@@ -4,7 +4,6 @@
 import { FACTION_COLORS, MISSION_MATRIX } from "./data.js";
 import { EVENTS } from "./events.js";
 
-const EVENT_KEY = "emperors-tarot-event";
 const GDM = "https://gdmissions.app/assets/11th";
 const ACCENT = "#0A84FF";
 const SHOW_POINTS = true;
@@ -25,12 +24,9 @@ const curPlayers = () => curEvent().players;
 const matchupsKey = (ev) => (ev || curEvent()).storage + "-matchups";
 const notesKey = (ev) => (ev || curEvent()).storage + "-notes";
 
-try {
-  state.eventId = localStorage.getItem(EVENT_KEY) || EVENTS[EVENTS.length - 1].id;
-} catch (e) {
-  state.eventId = EVENTS[EVENTS.length - 1].id;
-}
-state.eventId = curEvent().id;
+// Always open on the newest tournament (last entry in EVENTS); the picker
+// switches within the session.
+state.eventId = EVENTS[EVENTS.length - 1].id;
 
 // Per-opponent notes for the current event, keyed by player id: { macro, units }.
 // (Older versions stored a plain string — migrated into `macro`.)
@@ -67,9 +63,6 @@ function switchEvent(eventId) {
   state.listOpen = false;
   state.meMissionOpen = false;
   state.oppMissionOpen = false;
-  try {
-    localStorage.setItem(EVENT_KEY, eventId);
-  } catch (e) {}
   loadEventState();
   render();
   window.scrollTo(0, 0);
@@ -472,8 +465,6 @@ function rosterHTML() {
         <select id="event-picker" aria-label="Choose event">
           ${EVENTS.map((ev) => `<option value="${esc(ev.id)}" ${ev.id === curEvent().id ? "selected" : ""}>${esc(ev.name)}</option>`).join("")}
         </select>
-        <span class="eyebrow">· 40K</span>
-        <svg width="10" height="6" viewBox="0 0 14 9" fill="none"><path d="M1 1L7 7.5L13 1" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <h1>The Emperor's Tarot</h1>
       <div class="subtitle">${curPlayers().length} players · ${curEvent().points} pts</div>
@@ -633,7 +624,8 @@ function render() {
       "position:absolute;visibility:hidden;white-space:nowrap;font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;font-family:inherit";
     sizer.textContent = curEvent().name;
     document.body.appendChild(sizer);
-    picker.style.width = Math.ceil(sizer.getBoundingClientRect().width) + 8 + "px";
+    // + pill padding (14 left, 30 right incl. chevron) — select is border-box.
+    picker.style.width = Math.ceil(sizer.getBoundingClientRect().width) + 50 + "px";
     sizer.remove();
   }
 
