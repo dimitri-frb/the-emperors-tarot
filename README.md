@@ -1,6 +1,6 @@
 # The Emperor's Tarot
 
-Mobile-first matchup companion for the **Málaga Open** Warhammer 40,000 tournament (20 players, 2000 pts, 11th edition / GDM 2026 pack).
+Mobile-first matchup companion for Warhammer 40,000 tournaments (11th edition / GDM 2026 pack). Multi-event: an event picker in the header switches between rosters (currently **Málaga Open** and **Shark Games Septiembre 2026**); each event keeps its own player selection and notes.
 
 Pick who you are, tap an opponent, and see:
 
@@ -13,13 +13,14 @@ Pick who you are, tap an opponent, and see:
 Plain HTML/CSS/JS, no build step, no dependencies. Deployed on GitHub Pages.
 
 - `index.html` / `styles.css` / `app.js` — the app
-- `data.js` — roster, army lists, faction colors, mission matrix (**edit this file as real lists get published**; only Miguel Puerta Rodriguez's list is real today, the rest are plausible placeholders)
+- `data.js` — shared faction colors, map pools, mission matrix
+- `events/<id>.js` + `events.js` — one roster module per event (real BCP lists); add an event by creating a module and registering it in `events.js`
 - `assets/missions/`, `assets/layouts/` — all 25 mission cards + 45 terrain layouts, downloaded from [gdmissions.app](https://gdmissions.app) so the app **works offline at the venue** (a service worker precaches everything on first visit)
 - `scripts/download-assets.mjs` — re-downloads all images and regenerates `assets/manifest.json`
 
 ## Updating lists
 
-Edit `data.js` (each player = `{ id, name, team, faction, dispo, summary, list }`), commit, push. Pages redeploys automatically.
+Edit the event file in `events/` (each player = `{ id, name, team, faction, dispo, summary, list }`), commit, push. Pages redeploys automatically.
 
 If dispositions change, re-run the asset fetch so new pairings are cached:
 

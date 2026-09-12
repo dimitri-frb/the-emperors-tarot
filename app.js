@@ -1,16 +1,17 @@
 // The Emperor's Tarot — Málaga Open matchup companion.
 // Vanilla JS port of the design prototype (design_handoff_tournament_matchups).
 
-import { PLAYERS, FACTION_COLORS, MISSION_MATRIX } from "./data.js";
+import { FACTION_COLORS, MISSION_MATRIX } from "./data.js";
+import { EVENTS } from "./events.js";
 
-const STORAGE_KEY = "malaga-open-matchups";
-const NOTES_KEY = "malaga-open-notes";
+const EVENT_KEY = "emperors-tarot-event";
 const GDM = "https://gdmissions.app/assets/11th";
 const ACCENT = "#0A84FF";
 const SHOW_POINTS = true;
 
 const state = {
-  meId: "dimitri",
+  eventId: null,
+  meId: null,
   oppId: null,
   pickingSelf: false,
   search: "",
@@ -19,27 +20,66 @@ const state = {
   oppMissionOpen: false,
 };
 
-try {
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  if (saved.meId) state.meId = saved.meId;
-  if (saved.oppId !== undefined) state.oppId = saved.oppId;
-} catch (e) {}
+const curEvent = () => EVENTS.find((ev) => ev.id === state.eventId) || EVENTS[EVENTS.length - 1];
+const curPlayers = () => curEvent().players;
+const matchupsKey = (ev) => (ev || curEvent()).storage + "-matchups";
+const notesKey = (ev) => (ev || curEvent()).storage + "-notes";
 
-function persist() {
+try {
+  state.eventId = localStorage.getItem(EVENT_KEY) || EVENTS[EVENTS.length - 1].id;
+} catch (e) {
+  state.eventId = EVENTS[EVENTS.length - 1].id;
+}
+state.eventId = curEvent().id;
+
+// Per-opponent notes for the current event, keyed by player id: { macro, units }.
+// (Older versions stored a plain string — migrated into `macro`.)
+let notes = {};
+
+const normalizeNotes = (obj) => {
+  for (const id of Object.keys(obj)) {
+    if (typeof obj[id] === "string") obj[id] = { macro: obj[id], units: "" };
+  }
+  return obj;
+};
+
+// (Re)load selection + notes for the current event from its own storage keys.
+function loadEventState() {
+  const ev = curEvent();
+  state.meId = ev.defaultMeId;
+  state.oppId = null;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ meId: state.meId, oppId: state.oppId }));
+    const saved = JSON.parse(localStorage.getItem(matchupsKey(ev)) || "{}");
+    if (saved.meId && ev.players.some((p) => p.id === saved.meId)) state.meId = saved.meId;
+    if (saved.oppId === null || ev.players.some((p) => p.id === saved.oppId)) state.oppId = saved.oppId ?? null;
+  } catch (e) {}
+  notes = {};
+  try {
+    notes = normalizeNotes(JSON.parse(localStorage.getItem(notesKey(ev)) || "{}"));
   } catch (e) {}
 }
 
-// Per-opponent notes, keyed by player id: { macro, units }.
-// (Older versions stored a plain string — migrated into `macro`.)
-let notes = {};
-try {
-  notes = JSON.parse(localStorage.getItem(NOTES_KEY) || "{}");
-  for (const id of Object.keys(notes)) {
-    if (typeof notes[id] === "string") notes[id] = { macro: notes[id], units: "" };
-  }
-} catch (e) {}
+function switchEvent(eventId) {
+  if (!EVENTS.some((ev) => ev.id === eventId) || eventId === state.eventId) return;
+  state.eventId = eventId;
+  state.pickingSelf = false;
+  state.search = "";
+  state.listOpen = false;
+  state.meMissionOpen = false;
+  state.oppMissionOpen = false;
+  try {
+    localStorage.setItem(EVENT_KEY, eventId);
+  } catch (e) {}
+  loadEventState();
+  render();
+  window.scrollTo(0, 0);
+}
+
+function persist() {
+  try {
+    localStorage.setItem(matchupsKey(), JSON.stringify({ meId: state.meId, oppId: state.oppId }));
+  } catch (e) {}
+}
 
 function getNote(oppId) {
   return notes[oppId] || { macro: "", units: "" };
@@ -50,7 +90,7 @@ function saveNote(oppId, field, text) {
   if (n.macro.trim() || n.units.trim()) notes[oppId] = n;
   else delete notes[oppId];
   try {
-    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+    localStorage.setItem(notesKey(), JSON.stringify(notes));
   } catch (e) {}
 }
 
@@ -155,11 +195,14 @@ function missionImgSources(dispoSlug, missionSlug) {
 }
 
 function layoutImgSources(meSlug, oppSlug, i) {
-  // Mirror matches (same disposition) are published as "{slug}-mirror-{i}" on gdmissions.app.
-  const names =
+  // gdmissions.app naming: "a-vs-b-i" (one slug order per pairing), mirror
+  // matches as "a-mirror-i", and since Sept 2026 some layouts only exist as a
+  // "-portrait" variant.
+  const bases =
     meSlug === oppSlug
       ? [`${meSlug}-vs-${oppSlug}-${i}`, `${meSlug}-mirror-${i}`]
       : [`${meSlug}-vs-${oppSlug}-${i}`, `${oppSlug}-vs-${meSlug}-${i}`];
+  const names = bases.flatMap((n) => [n, `${n}-portrait`]);
   const local = names.map((n) => `assets/layouts/${n}.png`);
   const remote = names.map((n) => `${GDM}/layouts/no-measurements/${n}.png`);
   return {
@@ -188,8 +231,8 @@ async function copySyncLink() {
     alert("No notes to sync yet — write some first.");
     return;
   }
-  const url = location.origin + location.pathname + "#import=" + b64urlEncode(JSON.stringify(notes));
-  const msg = `Sync link copied (notes for ${count} opponent${count > 1 ? "s" : ""}).\n\nSend it to your other device (WhatsApp, email, AirDrop…) and open it there.`;
+  const url = location.origin + location.pathname + "#import=" + b64urlEncode(JSON.stringify({ e: curEvent().id, n: notes }));
+  const msg = `Sync link copied (${curEvent().name} — notes for ${count} opponent${count > 1 ? "s" : ""}).\n\nSend it to your other device (WhatsApp, email, AirDrop…) and open it there.`;
   try {
     await navigator.clipboard.writeText(url);
     alert(msg);
@@ -202,14 +245,23 @@ function handleImportHash() {
   if (!location.hash.startsWith("#import=")) return;
   let ok = false;
   try {
-    const incoming = JSON.parse(b64urlDecode(location.hash.slice(8)));
-    const entries = Object.entries(incoming).filter(([id]) => PLAYERS.some((p) => p.id === id));
+    const raw = JSON.parse(b64urlDecode(location.hash.slice(8)));
+    // Old links carried a bare notes object (Málaga Open era); new ones carry {e, n}.
+    const payload = raw && raw.n ? raw : { e: "malaga-open", n: raw };
+    const target = EVENTS.find((ev) => ev.id === payload.e);
+    if (!target) throw new Error("unknown event");
+    const entries = Object.entries(payload.n).filter(([id]) => target.players.some((p) => p.id === id));
     if (!entries.length) throw new Error("no valid entries");
-    if (confirm(`Import notes for ${entries.length} opponent${entries.length > 1 ? "s" : ""} from this link?\n\nYour notes for those opponents will be replaced.`)) {
+    if (confirm(`Import notes for ${entries.length} opponent${entries.length > 1 ? "s" : ""} (${target.name})?\n\nYour notes for those opponents will be replaced.`)) {
+      let existing = {};
+      try {
+        existing = normalizeNotes(JSON.parse(localStorage.getItem(notesKey(target)) || "{}"));
+      } catch (e) {}
       for (const [id, n] of entries) {
-        notes[id] = typeof n === "string" ? { macro: n, units: "" } : { macro: n.macro || "", units: n.units || "" };
+        existing[id] = typeof n === "string" ? { macro: n, units: "" } : { macro: n.macro || "", units: n.units || "" };
       }
-      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+      localStorage.setItem(notesKey(target), JSON.stringify(existing));
+      if (target.id === state.eventId) notes = existing;
       ok = true;
     }
   } catch (e) {
@@ -227,7 +279,7 @@ window.addEventListener("hashchange", () => {
 /* ---------- notes PDF export ---------- */
 
 async function exportNotesPDF() {
-  const noted = PLAYERS.filter((p) => {
+  const noted = curPlayers().filter((p) => {
     const n = getNote(p.id);
     return (n.macro.trim() || n.units.trim()) && p.id !== state.meId;
   });
@@ -240,7 +292,8 @@ async function exportNotesPDF() {
     return;
   }
 
-  const me = PLAYERS.find((p) => p.id === state.meId) || PLAYERS[0];
+  const players = curPlayers();
+  const me = players.find((p) => p.id === state.meId) || players[0];
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
@@ -249,15 +302,15 @@ async function exportNotesPDF() {
   const CW = W - M * 2;
   let y = M;
 
+  // jsPDF's WinAnsi fonts drop combining accents (BCP names arrive NFD) — compose first.
+  const nfc = (s) => s.normalize("NFC");
+
   // Header (first page only)
   doc.setFont("helvetica", "bold").setFontSize(16).setTextColor(28, 28, 30);
   doc.text("The Emperor's Tarot — Notes", M, y + 4);
   doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(142, 142, 147);
-  doc.text(`Málaga Open · playing as ${me.name} (${me.faction} · ${me.dispo})`, M, y + 20);
+  doc.text(nfc(`${curEvent().name} · playing as ${me.name} (${me.faction} · ${me.dispo})`), M, y + 20);
   y += 40;
-
-  // jsPDF's WinAnsi fonts drop combining accents (BCP names arrive NFD) — compose first.
-  const nfc = (s) => s.normalize("NFC");
 
   const LABEL_W = 62; // indent so note text clears the "Macro"/"Units" label column
 
@@ -328,7 +381,7 @@ document.documentElement.style.setProperty("--accent-soft", ACCENT + "1A");
 
 function filteredRoster() {
   const q = state.search.trim().toLowerCase();
-  return PLAYERS.filter((p) => (state.pickingSelf ? true : p.id !== state.meId))
+  return curPlayers().filter((p) => (state.pickingSelf ? true : p.id !== state.meId))
     .filter((p) => !q || (p.name + " " + p.team + " " + p.faction + " " + p.dispo).toLowerCase().includes(q))
     .map(decorate);
 }
@@ -349,9 +402,9 @@ function playerRowHTML(p) {
 }
 
 function dispoStatsHTML() {
-  const total = PLAYERS.length;
+  const total = curPlayers().length;
   const counts = {};
-  for (const p of PLAYERS) counts[p.dispo] = (counts[p.dispo] || 0) + 1;
+  for (const p of curPlayers()) counts[p.dispo] = (counts[p.dispo] || 0) + 1;
   const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
   const R = 44;
@@ -395,7 +448,7 @@ function dispoStatsHTML() {
 }
 
 function rosterHTML() {
-  const me = decorate(PLAYERS.find((p) => p.id === state.meId) || PLAYERS[0]);
+  const me = decorate(curPlayers().find((p) => p.id === state.meId) || curPlayers()[0]);
   const youCard = state.pickingSelf
     ? ""
     : `
@@ -415,9 +468,15 @@ function rosterHTML() {
 
   return `
     <div class="header">
-      <div class="eyebrow">Málaga Open · 40K</div>
+      <div class="event-picker">
+        <span class="eyebrow">${esc(curEvent().name)} · 40K</span>
+        <svg width="10" height="6" viewBox="0 0 14 9" fill="none"><path d="M1 1L7 7.5L13 1" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <select id="event-picker" aria-label="Choose event">
+          ${EVENTS.map((ev) => `<option value="${esc(ev.id)}" ${ev.id === curEvent().id ? "selected" : ""}>${esc(ev.name)}</option>`).join("")}
+        </select>
+      </div>
       <h1>The Emperor's Tarot</h1>
-      <div class="subtitle">20 players · 2000 pts</div>
+      <div class="subtitle">${curPlayers().length} players · ${curEvent().points} pts</div>
     </div>
     ${dispoStatsHTML()}
     ${youCard}
@@ -436,8 +495,8 @@ function rosterHTML() {
 }
 
 function matchupHTML() {
-  const me = decorate(PLAYERS.find((p) => p.id === state.meId) || PLAYERS[0]);
-  const opp = decorate(PLAYERS.find((p) => p.id === state.oppId));
+  const me = decorate(curPlayers().find((p) => p.id === state.meId) || curPlayers()[0]);
+  const opp = decorate(curPlayers().find((p) => p.id === state.oppId));
   const meSlug = slug(me.dispo);
   const oppSlug = slug(opp.dispo);
   const meMission = MISSION_MATRIX[me.dispo][opp.dispo];
@@ -561,9 +620,14 @@ function matchupHTML() {
 }
 
 function render() {
-  const opp = PLAYERS.find((p) => p.id === state.oppId);
+  const opp = curPlayers().find((p) => p.id === state.oppId);
   const showMatchup = !state.pickingSelf && !!opp;
   app.innerHTML = `<div class="page"><div class="container">${showMatchup ? matchupHTML() : rosterHTML()}</div></div>`;
+
+  const picker = document.getElementById("event-picker");
+  if (picker) {
+    picker.addEventListener("change", (e) => switchEvent(e.target.value));
+  }
 
   const search = document.getElementById("search");
   if (search) {
@@ -648,5 +712,6 @@ app.addEventListener("click", (e) => {
   }
 });
 
+loadEventState();
 handleImportHash();
 render();

@@ -6,7 +6,7 @@
 // Usage: node scripts/download-assets.mjs
 
 import { MISSION_MATRIX } from "../data.js";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 
 const GDM = "https://gdmissions.app/assets/11th";
@@ -35,6 +35,11 @@ async function save(relPath, buf) {
 
 const dispos = Object.keys(MISSION_MATRIX);
 
+// Start clean so files renamed upstream (e.g. mirror/portrait variants) don't
+// linger and shadow the current versions in the app's local-first fallback chain.
+await rm(path.join(ROOT, "assets/missions"), { recursive: true, force: true });
+await rm(path.join(ROOT, "assets/layouts"), { recursive: true, force: true });
+
 // --- Mission cards: MISSION_MATRIX[myDispo][oppDispo] -> primary-missions/{dispoSlug}/{missionSlug}.png
 console.log("Mission cards:");
 for (const myDispo of dispos) {
@@ -58,10 +63,14 @@ for (let a = 0; a < dispos.length; a++) {
     const sa = slug(dispos[a]);
     const sb = slug(dispos[b]);
     for (const i of [1, 2, 3]) {
-      const candidates =
+      // Each pairing may use "a-vs-b", the swapped order, or (mirror matches)
+      // "a-mirror"; since the Sept 2026 pack update one layout per pairing can
+      // also be a "-portrait" variant.
+      const bases =
         a === b
           ? [`${sa}-vs-${sb}-${i}`, `${sa}-mirror-${i}`]
           : [`${sa}-vs-${sb}-${i}`, `${sb}-vs-${sa}-${i}`];
+      const candidates = bases.flatMap((n) => [n, `${n}-portrait`]);
       let ok = false;
       for (const name of candidates) {
         const buf = await fetchImage(`${GDM}/layouts/no-measurements/${name}.png`);
@@ -80,7 +89,18 @@ for (let a = 0; a < dispos.length; a++) {
 }
 
 // --- Precache manifest for the service worker
-const manifest = ["index.html", "styles.css", "app.js", "data.js", "vendor/jspdf.umd.min.js", "assets/map-layout.png", ...downloaded];
+const manifest = [
+  "index.html",
+  "styles.css",
+  "app.js",
+  "data.js",
+  "events.js",
+  "events/malaga-open.js",
+  "events/shark-games.js",
+  "vendor/jspdf.umd.min.js",
+  "assets/map-layout.png",
+  ...downloaded,
+];
 await writeFile(path.join(ROOT, "assets/manifest.json"), JSON.stringify(manifest, null, 2));
 
 console.log(`\nDone: ${downloaded.length} images downloaded, ${failed.length} failed.`);
