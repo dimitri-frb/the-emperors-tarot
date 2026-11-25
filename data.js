@@ -21,6 +21,8 @@ export const FACTION_COLORS = {
   "Aeldari": "#0091B2",
   "Adepta Sororitas": "#C2255C",
   "Death Guard": "#5C7A29",
+  "Leagues of Votann": "#B54A35",
+  "Genestealer Cults": "#5B68C0",
 };
 
 export const MAP_POOLS = {

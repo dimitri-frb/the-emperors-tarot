@@ -1,6 +1,6 @@
 # The Emperor's Tarot
 
-Mobile-first matchup companion for Warhammer 40,000 tournaments (11th edition / GDM 2026 pack). Multi-event: an event picker in the header switches between rosters (currently **Málaga Open** and **Shark Games Septiembre 2026**); each event keeps its own player selection and notes.
+Mobile-first matchup companion for Warhammer 40,000 tournaments (11th edition / GDM 2026 pack). Multi-event: currently loaded: **WCW 2026 — World Championships of Warhammer, Pod 13** (62 of 64 lists). Each event keeps its own player selection and notes.
 
 Pick who you are, tap an opponent, and see:
 

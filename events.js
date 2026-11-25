@@ -2,7 +2,6 @@
 // an EVENT object ({ id, name, storage, defaultMeId, points, players }), then
 // import it below. The last entry is the default for first-time visitors.
 
-import { EVENT as MALAGA_OPEN } from "./events/malaga-open.js";
-import { EVENT as SHARK_GAMES } from "./events/shark-games.js";
+import { EVENT as WCW } from "./events/wcw.js";
 
-export const EVENTS = [MALAGA_OPEN, SHARK_GAMES];
+export const EVENTS = [WCW];
